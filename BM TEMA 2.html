@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuiz Bahasa Melayu Tahun 4: Kesihatan & Kebersihan</title>
+  <style>
+    :root {
+      --primary: #FF6B6B;
+      --secondary: #4ECDC4;
+      --correct: #2ECC71;
+      --wrong: #E74C3C;
+      --dark: #2C3E50;
+      --light: #F7FFF7;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px; }
+    .quiz-card { background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 100%; max-width: 650px; padding: 25px; overflow: hidden; }
+    
+    .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; color: var(--dark); }
+    .timer { background: #ffeaa7; padding: 6px 12px; border-radius: 20px; color: #d63031; }
+    
+    .progress-container { background: #e0e0e0; height: 10px; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+    .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
+    
+    .question-text { font-size: 1.1rem; color: var(--dark); margin-bottom: 20px; line-height: 1.4; font-weight: 600; }
+    
+    .options-grid { display: grid; gap: 10px; margin-bottom: 15px; }
+    .option-btn { background: var(--light); border: 2px solid #ffe3e3; border-radius: 12px; padding: 12px 15px; text-align: left; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; color: var(--dark); }
+    .option-btn:hover:not(:disabled) { border-color: var(--primary); background: #fff0f0; }
+    .option-btn.correct { background: #d4edda !important; border-color: var(--correct) !important; color: #155724; font-weight: bold; }
+    .option-btn.wrong { background: #f8d7da !important; border-color: var(--wrong) !important; color: #721c24; }
+    
+    .explanation-box { background: #e8f8f5; border-left: 5px solid var(--secondary); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; color: #117a65; display: none; line-height: 1.4; }
+    
+    .next-btn, .restart-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 1rem; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.2s; }
+    .next-btn:hover, .restart-btn:hover { background: #ee5253; }
+    
+    .result-screen { text-align: center; display: none; }
+    .score-circle { width: 120px; height: 120px; border-radius: 50%; background: var(--secondary); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 20px auto; }
+  </style>
+</head>
+<body>
+
+<div class="quiz-card">
+  <div id="quiz-screen">
+    <div class="header-info">
+      <span id="question-count">Soalan 1/40</span>
+      <span class="timer">⏳ Masa: <span id="time-left">20</span>s</span>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    
+    <div class="question-text" id="question-text">Soalan dimuatkan...</div>
+    <div class="options-grid" id="options-container"></div>
+    <div class="explanation-box" id="explanation-box"></div>
+    <button class="next-btn" id="next-btn" style="display: none;" onclick="nextQuestion()">Soalan Seterusnya</button>
+  </div>
+
+  <div class="result-screen" id="result-screen">
+    <h2>Tahniah! Kuiz Selesai</h2>
+    <div class="score-circle" id="score-text">0/40</div>
+    <p id="result-message" style="margin-bottom: 20px; color: var(--dark);"></p>
+    <button class="restart-btn" onclick="restartQuiz()">Ulang Semula Kuiz</button>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  { q: "Kita hendaklah ________ tangan menggunakan sabun sebelum makan untuk membunuh kuman.", a: ["mencuci", "membilas", "lap", "mengesat"], c: 0, e: "Kata kerja yang paling tepat untuk membersihkan tangan dengan air dan sabun ialah 'mencuci'." },
+  { q: "Pilihlah ejaan yang BETUL bagi perkataan berkaitan kesihatan di bawah.", a: ["Klinik", "Klinic", "Kelinik", "Kelinick"], c: 0, e: "Ejaan mengikut Dewan Bahasa dan Pustaka (DBP) yang betul ialah 'Klinik'." },
+  { q: "Amalan memotong kuku secara berkala dapat elak kuman ________ di celah kuku.", a: ["membiak", "bertambah", "berkumpul", "bersembunyi"], c: 0, e: "Proses kuman bertambah banyak dipanggil 'membiak'." },
+  { q: "Ali membeli dua ________ sabun mandi di kedai runcit itu.", a: ["ketul", "biji", "batang", "keping"], c: 0, e: "Penjodoh bilangan yang betul bagi sabun bentuk pepejal ialah 'ketul'." },
+  { q: "Amalan gaya hidup sihat termasuklah makan makanan yang ________.", a: ["seimbang", "sedap", "manis", "mahal"], c: 0, e: "Pemakanan 'seimbang' membekalkan nutrien yang cukup untuk badan." },
+  { q: "Ibu menggunakan se______ kain bersih untuk mengelap peluh di dahi adik.", a: ["sehelai", "sekeping", "sebiji", "sebatang"], c: 0, e: "Penjodoh bilangan bagi kain yang tipis dan lembut ialah 'helai'." },
+  { q: "Irama jantung Adam berdegup kencang selepas dia ________ di padang sekolah.", a: ["bersenam", "berlegar", "duduk", "baring"], c: 0, e: "Aktiviti fizikal seperti 'bersenam' meningkatkan kadar degupan jantung." },
+  { q: "Kawasan kediaman yang bersih dapat menghindarkan pembiakan nyamuk ________.", a: ["Aedes", "Tiruk", "Lalat", "Pijat"], c: 0, e: "Nyamuk Aedes menyebabkan penyakit demam denggi." },
+  { q: "Apakah maksud simpulan bahasa 'mandi peluh'?", a: ["Bekerja keras atau bersungguh-sungguh", "Mandi menggunakan air panas", "Mandi di sungai", "Peluh yang terlalu berbau"], c: 0, e: "'Mandi peluh' bermaksud bekerja atau bersenam dengan bersungguh-sungguh sehingga basah dengan peluh." },
+  { q: "Doktor menyarankan kita minum sekurang-kurangnya lapan ________ air kosong sehari.", a: ["gelas", "titik", "mangkuk", "baldi"], c: 0, e: "Ukuran atau penjodoh bilangan asas minum air cecair ialah 'gelas'." },
+  { q: "Sebelum makan buah-buahan, kita mestilah ________nya sehingga bersih.", a: ["membasuh", "menyiram", "merendam", "menyapu"], c: 0, e: "Perbuatan membersihkan makanan daripada kotoran dinamakan 'membasuh'." },
+  { q: "Kawasan takungan air jernih yang dibiarkan boleh menjadi tempat ________ nyamuk.", a: ["pembiakan", "pembesaran", "persembunyi", "perhimpunan"], c: 0, e: "Kata nama terbitan yang betul bagi proses nyamuk bertelur dan berkembang ialah 'pembiakan'." },
+  { q: "Ayah ________ tong sampah yang sarat dengan sisa makanan itu ke dalam lori sampah.", a: ["mengangkat", "mengusung", "memikul", "menjinjing"], c: 0, e: "Perbuatan memindahkan objek berat menggunakan tangan dipanggil 'mengangkat'." },
+  { q: "Murid-murid digalakkan membawa ________ air sendiri ke sekolah.", a: ["botol", "tin", "cawan", "bekas"], c: 0, e: "'Botol air' ialah kata nama khas bagi bekas cecair mudah alih." },
+  { q: "Adik berasa sakit perut kerana makan makanan yang telah ________.", a: ["basi", "masak", "segar", "mentah"], c: 0, e: "Makanan yang tercemar dan rosak dipanggil makanan 'basi'." },
+  { q: "Pak Cik Hassan dimasukkan ke hospital kerana diserang penyakit ________ tinggi.", a: ["tekanan darah", "kencing manis", "sakit jantung", "batuk"], c: 0, e: "Istilah perubatan yang betul ialah 'tekanan darah tinggi'." },
+  { q: "Kotoran degil pada longkang itu digosok oleh abang menggunakan se______ berus.", a: ["batang", "ketul", "bilah", "pucuk"], c: 0, e: "Penjodoh bilangan bagi berus yang ada pemegang ialah 'batang'." },
+  { q: "Apakah antonim (perkataan berlawanan) bagi 'BERSIH'?", a: ["Kotor", "Suci", "Jernih", "Kemas"], c: 0, e: "Lawan bagi bersih ialah 'kotor'." },
+  { q: "Apakah sinonim (perkataan sama maksud) bagi 'SIHAT'?", a: ["Cergas / Sejahtera", "Sakit", "Lesu", "Lemah"], c: 0, e: "Sihat membawa maksud badan yang cergas dan sejahtera." },
+  { q: "Doktor memberi adik se______ ubat batuk selepas membuat pemeriksaan kesihatan.", a: ["botol", "papan", "biji", "bekas"], c: 0, e: "Penjodoh bilangan cecair ubat batuk di dalam bekas kaca/plastik ialah 'botol'." },
+  { q: "Kita perlu menjaga kebersihan diri ________ tidak mudah dijangkiti penyakit.", a: ["supaya", "kerana", "lalu", "sambil"], c: 0, e: "Kata hubung pancangan keterangan tujuan yang betul ialah 'supaya'." },
+  { q: "Amalan ________ gigi sekurang-kurangnya dua kali sehari menjaga kesihatan mulut.", a: ["menggosok", "menyapu", "mencuci", "mengesat"], c: 0, e: "Kata kerja khusus bagi pembersihan gigi ialah 'menggosok'." },
+  { q: "Ibu menyapu ________ pada luka di lutut adik.", a: ["ubat antiseptik", "minyak wangi", "air paip", "sabun basuh"], c: 0, e: "Bahan cecair pencegah jangkitan kuman pada luka dinamakan 'ubat antiseptik'." },
+  { q: "Penduduk Kampung Murni bergotong-royong membersihkan kawasan persekitaran untuk ________ penyakit.", a: ["mencegah", "merawat", "mengubat", "menjangkit"], c: 0, e: "Perbuatan menghalang sesuatu buruk daripada berlaku ialah 'mencegah'." },
+  { q: "Pengambilan makanan yang berlemak secara berlebihan boleh menyebabkan masalah ________.", a: ["obesiti", "kebersihan", "anemia", "strok"], c: 0, e: "Kegemukan berlebihan dipanggil 'obesiti'." },
+  { q: "Apakah penjodoh bilangan yang sesuai bagi ubat pil?", a: ["biji", "ketul", "batang", "keping"], c: 0, e: "Benda kecil dan bulat seperti pil ubat menggunakan penjodoh bilangan 'biji'." },
+  { q: "Ibu ____ cecair pembasmi kuman pada tangan adik sebelum makan.", a: ["menyembur", "menyiram", "mencelup", "menuang"], c: 0, e: "Mengeluarkan cecair dalam bentuk titik halus dipanggil 'menyembur'." },
+  { q: "Murid yang menjaga kebersihan pakaian akan kelihatan ________ dan kemas.", a: ["segar", "kotor", "comot", "selekeh"], c: 0, e: "Sifat orang yang bersih dan kemas ialah 'segar' / rapi." },
+  { q: "Sampah sarap hendaklah dibuang ke dalam ________ sampah yang bertutup.", a: ["tong", "bakul", "kotak", "plastik"], c: 0, e: "Bekas khas pembuangan sisa dinamakan 'tong sampah'." },
+  { q: "Kita ditegah sama sekali membuang sampah ke dalam sungai untuk mengelakkan ________ air.", a: ["pencemaran", "pembersihan", "penjagaan", "pembekalan"], c: 0, e: "Perbuatan mengotorkan alam sekitar dinamakan 'pencemaran'." },
+  { q: "Seseorang yang menjaga pemakanan akan mempunyai daya ________ badan yang kuat.", a: ["tahan", "juang", "serap", "tarik"], c: 0, e: "Sistem imun badan dikenali sebagai 'dara tahan badan'." },
+  { q: "Tindakan bersenam sekurang-kurangnya 30 minit sehari dapat ________ badan.", a: ["menyihatkan", "menggemukkan", "meletihkan", "merosakkan"], c: 0, e: "Bersenam memberi kebaikan untuk 'menyihatkan' tubuh badan." },
+  { q: "Pesakit itu dirawat oleh seorang ________ yang sangat berdedikasi.", a: ["doktor", "guru", "polis", "peguam"], c: 0, e: "Kerjaya merawat pesakit di hospital ialah 'doktor'." },
+  { q: "Sayur-sayuran dan buah-buahan mengandungi banyak ________ yang baik untuk penghadaman.", a: ["serat", "lemak", "gula", "garam"], c: 0, e: "'Serat' membantu melancarkan sistem penghadaman badan." },
+  { q: "Maksud simpulan bahasa 'tajam akal' ialah...", a: ["Cepat belajar atau pintar", "Suka marah", "Mata yang terang", "Sakit kepala"], c: 0, e: "'Tajam akal' bermaksud seorang yang pintar dan cepat memahami sesuatu." },
+  { q: "Ibu membungkus sisa makanan itu dengan rapat ________ tidak dihinggapi lalat.", a: ["agar", "tetapi", "malahan", "kemudian"], c: 0, e: "Kata hubung pancangan tujuan yang sesuai ialah 'agar' atau 'supaya'." },
+  { q: "Kanak-kanak perlu mendapatkan ________ imunisasi untuk mencegah penyakit berbahaya.", a: ["suntikan", "makanan", "minuman", "pembedahan"], c: 0, e: "Imunisasi vaksin kebiasaannya diberikan melalui 'suntikan'." },
+  { q: "Kita mestilah menukar cadar katil secara berkala untuk menghalang pembiakan ________.", a: ["hama", "lalat", "semut", "cicak"], c: 0, e: "Hama tempat tidur mudah membiak pada fabrik yang kotor." },
+  { q: "Abang ________ bilik tidurnya setiap hujung minggu agar kekal bersih.", a: ["kemas", "mengemas", "terkemas", "kemaskan"], c: 1, e: "Kata kerja transitif bersisipan/berawalan yang tepat bagi subjek 'Abang' ialah 'mengemas'." },
+  { q: "Pilihlah peribahasa yang sesuai: Kita perlu bertindak awal menjaga kebersihan sebelum ditimpa penyakit.", a: ["Mencegah lebih baik daripada merawat", "Sediakan payung sebelum hujan", "Berat sama dipikul, ringan sama dijinjing", "Ukur baju di badan sendiri"], c: 0, e: "Ungkapan kesihatan yang paling tepat ialah 'Mencegah lebih baik daripada merawat'." }
+];
+
+let currentQ = 0;
+let score = 0;
+let timer;
+let timeLeft = 20;
+
+function startQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById("quiz-screen").style.display = "block";
+  document.getElementById("result-screen").style.display = "none";
+  loadQuestion();
+}
+
+function loadQuestion() {
+  clearInterval(timer);
+  timeLeft = 20;
+  document.getElementById("time-left").innerText = timeLeft;
+  document.getElementById("explanation-box").style.display = "none";
+  document.getElementById("next-btn").style.display = "none";
+
+  let qData = quizData[currentQ];
+  document.getElementById("question-count").innerText = `Soalan ${currentQ + 1}/${quizData.length}`;
+  document.getElementById("question-text").innerText = qData.q;
+  
+  // Progress Bar
+  let progress = ((currentQ) / quizData.length) * 100;
+  document.getElementById("progress-bar").style.width = `${progress}%`;
+
+  // Options
+  let optsContainer = document.getElementById("options-container");
+  optsContainer.innerHTML = "";
+  
+  qData.a.forEach((opt, idx) => {
+    let btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.innerText = opt;
+    btn.onclick = () => selectAnswer(idx);
+    optsContainer.appendChild(btn);
+  });
+
+  // Timer Countdown
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("time-left").innerText = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      autoTimeOut();
+    }
+  }, 1000);
+}
+
+function selectAnswer(selectedIdx) {
+  clearInterval(timer);
+  let qData = quizData[currentQ];
+  let btns = document.querySelectorAll(".option-btn");
+  
+  btns.forEach(btn => btn.disabled = true);
+
+  if (selectedIdx === qData.c) {
+    btns[selectedIdx].classList.add("correct");
+    score++;
+  } else {
+    btns[selectedIdx].classList.add("wrong");
+    btns[qData.c].classList.add("correct");
+  }
+
+  showExplanation(qData.e);
+}
+
+function autoTimeOut() {
+  let qData = quizData[currentQ];
+  let btns = document.querySelectorAll(".option-btn");
+  btns.forEach(btn => btn.disabled = true);
+  btns[qData.c].classList.add("correct");
+  showExplanation("Masa Tamat! " + qData.e);
+}
+
+function showExplanation(text) {
+  let expBox = document.getElementById("explanation-box");
+  expBox.innerText = "Penjelasan: " + text;
+  expBox.style.display = "block";
+  document.getElementById("next-btn").style.display = "block";
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ < quizData.length) {
+    loadQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById("quiz-screen").style.display = "none";
+  document.getElementById("result-screen").style.display = "block";
+  document.getElementById("score-text").innerText = `${score}/${quizData.length}`;
+  
+  let msg = "";
+  let percentage = (score / quizData.length) * 100;
+  if (percentage >= 80) msg = "Cemerlang! Penguasaan Bahasa Melayu anda sangat baik!";
+  else if (percentage >= 50) msg = "Syabas! Anda boleh mengulang semula kuiz untuk markah yang lebih cemerlang.";
+  else msg = "Jangan putus asa, teruskan latihan dan ulang kaji semula ya!";
+  
+  document.getElementById("result-message").innerText = msg;
+}
+
+function restartQuiz() {
+  startQuiz();
+}
+
+// Start Automatically
+startQuiz();
+</script>
+</body>
+</html>
